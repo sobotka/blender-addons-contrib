@@ -18,8 +18,7 @@ import bpy
 from operator import attrgetter
 
 from .utils.global_settings import SequenceTypes
-from .utils.functions import find_sequences_after
-from .utils.functions import get_mouse_frame_and_channel
+from .utils.functions import find_sequences_after, get_mouse_frame_and_channel, sequencer_workaround_2_80_audio_bug
 from .utils.doc import doc_name, doc_idname, doc_brief, doc_description
 
 
@@ -85,7 +84,7 @@ class POWER_SEQUENCER_OT_concatenate_strips(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.sequences
+        return context.sequences and context.selected_sequences
 
     def invoke(self, context, event):
         if not context.selected_sequences:
@@ -123,6 +122,8 @@ class POWER_SEQUENCER_OT_concatenate_strips(bpy.types.Operator):
                 )
                 to_concatenate.remove(strip_target)
                 self.concatenate(strip_target, to_concatenate, force_all=True)
+
+        sequencer_workaround_2_80_audio_bug(context)
         return {"FINISHED"}
 
     def concatenate(self, strip_target, sequences, force_all=False):
