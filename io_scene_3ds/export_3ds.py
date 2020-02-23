@@ -629,7 +629,7 @@ def extract_triangles(mesh):
     for i, face in enumerate(mesh.loop_triangles):
         f_v = face.vertices
 
-        uf = mesh.uv_layer.active.data[i] if do_uv else None
+        uf = mesh.uv_layers.active.data[i] if do_uv else None
 
         if do_uv:
             f_uv = uf.uv
@@ -736,7 +736,7 @@ def make_faces_chunk(tri_list, mesh, materialDict):
     face_chunk = _3ds_chunk(OBJECT_FACES)
     face_list = _3ds_array()
 
-    if mesh.uv_layer:
+    if mesh.uv_layers:
         # Gather materials used in this mesh - mat/image pairs
         unique_mats = {}
         for i, tri in enumerate(tri_list):
@@ -1053,11 +1053,11 @@ def save(operator,
                 mat_ls_len = len(mat_ls)
 
                 # get material/image tuples.
-                if data.uv_layer:
+                if data.uv_layers:
                     if not mat_ls:
                         mat = mat_name = None
 
-                    for f, uf in zip(data.loop_triangles, data.uv_layer.active.data):
+                    for f, uf in zip(data.loop_triangles, data.uv_layers.active.data):
                         if mat_ls:
                             mat_index = f.material_index
                             if mat_index >= mat_ls_len:
