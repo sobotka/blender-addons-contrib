@@ -1022,10 +1022,11 @@ def save(operator,
     mesh_objects = []
 
     scene = context.scene
+    layer = context.view_layer
     depsgraph = context.evaluated_depsgraph_get()
 
     if use_selection:
-        objects = (ob for ob in scene.objects if not ob.hide_vieport and ob.select_get())
+        objects = (ob for ob in scene.objects if not ob.hide_vieport and ob.select_get(view_layer=layer))
     else:
         objects = (ob for ob in scene.objects if not ob.hide_viewport)
 
