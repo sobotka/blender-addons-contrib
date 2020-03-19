@@ -1059,7 +1059,7 @@ def save(operator,
                     if not mat_ls:
                         mat = mat_name = None
 
-                    for f, uf in zip(data.loop_triangles, data.uv_layers.active.data):
+                    for f, uf in zip(data.polygons, data.uv_layers.active.data):
                         if mat_ls:
                             mat_index = f.material_index
                             if mat_index >= mat_ls_len:
@@ -1080,7 +1080,7 @@ def save(operator,
                             materialDict.setdefault((mat.name, None), (mat, None))
 
                     # Why 0 Why!
-                    for f in data.loop_triangles:
+                    for f in data.polygons:
                         if f.material_index >= mat_ls_len:
                             f.material_index = 0
 
