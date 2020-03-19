@@ -439,7 +439,7 @@ class _3ds_chunk(object):
 def get_material_image_texslots(material):
     # blender utility func.
     if material:
-        return [s for s in material.texture_slots if s and s.texture.type == 'IMAGE' and s.texture.image]
+        return [s for s in material.texture_paint_slots if s and s.texture.type == 'IMAGE' and s.texture.image]
 
     return []
 
@@ -561,8 +561,8 @@ def make_material_chunk(material, image):
         material_chunk.add_subchunk(make_material_subchunk(MATSPECULAR, (1.0, 1.0, 1.0)))
 
     else:
-        material_chunk.add_subchunk(make_material_subchunk(MATAMBIENT, (material.metallic * material.diffuse_color)[:]))
-        material_chunk.add_subchunk(make_material_subchunk(MATDIFFUSE, material.diffuse_color[:]))
+        material_chunk.add_subchunk(make_material_subchunk(MATAMBIENT, material.line_color[:3]))
+        material_chunk.add_subchunk(make_material_subchunk(MATDIFFUSE, material.diffuse_color[:3]))
         material_chunk.add_subchunk(make_material_subchunk(MATSPECULAR, material.specular_color[:]))
 
         slots = get_material_image_texslots(material)  # can be None
@@ -633,9 +633,10 @@ def extract_triangles(mesh):
 
         if do_uv:
             f_uv = uf.uv
-            img = uf.image if uf else None
-            if img is not None:
-                img = img.name
+            # image is no longer part of meshUV
+            #img = uf.image if uf else None
+            #if img is not None:
+                #img = img.name
 
         # if f_v[3] == 0:
         if len(f_v) == 3:
@@ -1024,9 +1025,9 @@ def save(operator,
     depsgraph = context.evaluated_depsgraph_get()
 
     if use_selection:
-        objects = (ob for ob in scene.objects if ob.visible_get() and ob.select_get())
+        objects = (ob for ob in scene.objects if not ob.hide_vieport and ob.select_get())
     else:
-        objects = (ob for ob in scene.objects if ob.visible_get())
+        objects = (ob for ob in scene.objects if not ob.hide_viewport)
 
     for ob in objects:
         # get derived objects
@@ -1065,11 +1066,12 @@ def save(operator,
                             mat = mat_ls[mat_index]
                             mat_name = None if mat is None else mat.name
                         # else there already set to none
+                        
+                        # image no longer part of meshUV
+                        #img = uf.image
+                        #img_name = None if img is None else img.name
 
-                        img = uf.image
-                        img_name = None if img is None else img.name
-
-                        materialDict.setdefault((mat_name, img_name), (mat, img))
+                        materialDict.setdefault((mat_name, None), (mat, None))
 
                 else:
                     for mat in mat_ls:
