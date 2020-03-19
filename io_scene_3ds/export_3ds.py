@@ -1048,7 +1048,7 @@ def save(operator,
                 data = None
 
             if data:
-                matrix = global_matrix * mat
+                matrix = global_matrix @ mat
                 data.transform(matrix)
                 mesh_objects.append((ob_derived, data, matrix))
                 mat_ls = data.materials
@@ -1063,7 +1063,7 @@ def save(operator,
                         if mat_ls:
                             mat_index = f.material_index
                             if mat_index >= mat_ls_len:
-                                mat_index = f.mat = 0
+                                mat_index = f.material_index = 0
                             mat = mat_ls[mat_index]
                             mat_name = None if mat is None else mat.name
                         # else there already set to none
