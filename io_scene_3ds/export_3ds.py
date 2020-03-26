@@ -125,9 +125,6 @@ def sane_name(name):
     return new_name
 
 
-def uv_key(uv):
-    return round(uv[0], 6), round(uv[1], 6)
-
 # size defines:
 SZ_SHORT = 2
 SZ_INT = 4
@@ -202,7 +199,7 @@ class _3ds_string(object):
         file.write(struct.pack(binary_format, self.value))
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 
 class _3ds_point_3d(object):
@@ -619,9 +616,10 @@ class tri_wrapper(object):
 
 
 def extract_triangles(mesh):
-    """Extract triangles from a mesh.
-
-    If the mesh contains quads, they will be split into triangles."""
+    """Extract triangles from a mesh."""
+    
+    mesh.calc_loop_triangles()
+    
     tri_list = []
     do_uv = bool(mesh.uv_layers)
 
@@ -629,32 +627,23 @@ def extract_triangles(mesh):
     for i, face in enumerate(mesh.loop_triangles):
         f_v = face.vertices
 
-        uf = mesh.uv_layers.active.data[i] if do_uv else None
+        uf = mesh.uv_layers.active.data if do_uv else None
 
         if do_uv:
-            f_uv = uf.uv
+            t_lp = mesh.loop_triangles.loops
             # image is no longer part of meshUV
             #img = uf.image if uf else None
             #if img is not None:
                 #img = img.name
+                
+        def v_key(loop):
+            return (uf[loop].uv[:])
 
-        # if f_v[3] == 0:
         if len(f_v) == 3:
             new_tri = tri_wrapper((f_v[0], f_v[1], f_v[2]), face.material_index, img)
             if (do_uv):
-                new_tri.faceuvs = uv_key(f_uv[0]), uv_key(f_uv[1]), uv_key(f_uv[2])
+                new_tri.faceuvs = v_key(t_lp[0]), v_key(t_lp[1]), v_key(t_lp[2])
             tri_list.append(new_tri)
-
-        else:  # it's a quad
-            new_tri = tri_wrapper((f_v[0], f_v[1], f_v[2]), face.material_index, img)
-            new_tri_2 = tri_wrapper((f_v[0], f_v[2], f_v[3]), face.material_index, img)
-
-            if (do_uv):
-                new_tri.faceuvs = uv_key(f_uv[0]), uv_key(f_uv[1]), uv_key(f_uv[2])
-                new_tri_2.faceuvs = uv_key(f_uv[0]), uv_key(f_uv[2]), uv_key(f_uv[3])
-
-            tri_list.append(new_tri)
-            tri_list.append(new_tri_2)
 
     return tri_list
 
@@ -1023,7 +1012,7 @@ def save(operator,
 
     scene = context.scene
     layer = context.view_layer
-    depsgraph = context.evaluated_depsgraph_get()
+    #depsgraph = context.evaluated_depsgraph_get()
 
     if use_selection:
         objects = (ob for ob in scene.objects if not ob.hide_viewport and ob.select_get(view_layer=layer))
@@ -1041,9 +1030,9 @@ def save(operator,
             if ob.type not in {'MESH', 'CURVE', 'SURFACE', 'FONT', 'META'}:
                 continue
 
-            ob_derived_eval = ob_derived.evaluated_get(depsgraph)
+            #ob_derived_eval = ob_derived.evaluated_get(depsgraph)
             try:
-                data = ob_derived_eval.to_mesh()
+                data = ob_derived.to_mesh()
             except:
                 data = None
 
