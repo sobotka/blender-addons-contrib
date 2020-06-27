@@ -23,7 +23,7 @@ bl_info = {
     "description": "Export cameras, selected objects & camera solution "
         "3D Markers to Adobe After Effects CS3 and above",
     "author": "Bartek Skorupa, (Adi Samsonoff)",
-    "version": (0, 0, 66),
+    "version": (0, 0, 67),
     "blender": (2, 80, 0),
     "location": "File > Export > Adobe After Effects (.jsx)",
     "warning": "",
@@ -240,7 +240,7 @@ def convert_lens(camera, width, height, aspect):
 
 
 # jsx script for AE creation
-def write_jsx_file(file, data, selection, include_animation, include_active_cam, include_selected_cams, include_selected_objects, include_cam_bundles):
+def write_jsx_file(file, data, selection, include_animation, include_active_cam, include_selected_cams, include_selected_objects, include_cam_bundles, object_anchor_point_type):
 
     print("\n---------------------------\n- Export to After Effects -\n---------------------------")
     # store the current frame to restore it at the end of export
@@ -590,6 +590,8 @@ def write_jsx_file(file, data, selection, include_animation, include_active_cam,
         jsx_file.write('var %s = newComp.layers.addNull();\n' % (name_ae))
         jsx_file.write('%s.threeDLayer = true;\n' % name_ae)
         jsx_file.write('%s.source.name = "%s";\n' % (name_ae, name_ae))
+        if object_anchor_point_type == 'CENTERED':
+            jsx_file.write('%s.anchorPoint.setValue([%s.width / 2, %s.height / 2, 0]);\n' % (name_ae, name_ae, name_ae))
         # Set values of properties, add kyeframes only where needed
         if include_animation and js_data['nulls'][name_ae]['position_anim']:
             jsx_file.write('%s.property("position").setValuesAtTimes([%s],[%s]);\n' % (name_ae, js_data['times'], js_data['nulls'][obj]['position']))
@@ -676,10 +678,10 @@ def write_jsx_file(file, data, selection, include_animation, include_active_cam,
 ##########################################
 
 
-def main(file, context, include_animation, include_active_cam, include_selected_cams, include_selected_objects, include_cam_bundles):
+def main(file, context, include_animation, include_active_cam, include_selected_cams, include_selected_objects, include_cam_bundles, object_anchor_point_type):
     data = get_comp_data(context)
     selection = get_selected(context)
-    write_jsx_file(file, data, selection, include_animation, include_active_cam, include_selected_cams, include_selected_objects, include_cam_bundles)
+    write_jsx_file(file, data, selection, include_animation, include_active_cam, include_selected_cams, include_selected_objects, include_cam_bundles, object_anchor_point_type)
     print ("\nExport to After Effects Completed")
     return {'FINISHED'}
 
@@ -688,7 +690,7 @@ def main(file, context, include_animation, include_active_cam, include_selected_
 ##########################################
 
 from bpy_extras.io_utils import ExportHelper
-from bpy.props import StringProperty, BoolProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 
 class ExportJsx(bpy.types.Operator, ExportHelper):
@@ -723,6 +725,15 @@ class ExportJsx(bpy.types.Operator, ExportHelper):
             description="Include 3D Markers of Camera Motion Solution for selected cameras",
             default=True,
             )
+    object_anchor_point_type: EnumProperty(
+            items=[
+                ('DEFAULT', 'Default', 'Anchor point will be default (0,0,0)'),
+                ('CENTERED', 'Centered', "Anchor point will be centered"),
+            ],
+            name="Anchor Point for Objects",
+            description="Anchor Point for Objects",
+            default='DEFAULT',
+            )
 #    include_ob_bundles = BoolProperty(
 #            name="Objects 3D Markers",
 #            description="Include 3D Markers of Object Motion Solution for selected cameras",
@@ -741,6 +752,7 @@ class ExportJsx(bpy.types.Operator, ExportHelper):
         box.prop(self, 'include_selected_objects')
         box.label(text="Include Tracking Data:")
         box.prop(self, 'include_cam_bundles')
+        box.prop(self, 'object_anchor_point_type')
 #        box.prop(self, 'include_ob_bundles')
 
     @classmethod
@@ -752,7 +764,7 @@ class ExportJsx(bpy.types.Operator, ExportHelper):
         return ok
 
     def execute(self, context):
-        return main(self.filepath, context, self.include_animation, self.include_active_cam, self.include_selected_cams, self.include_selected_objects, self.include_cam_bundles)
+        return main(self.filepath, context, self.include_animation, self.include_active_cam, self.include_selected_cams, self.include_selected_objects, self.include_cam_bundles, self.object_anchor_point_type)
 
 
 def menu_func(self, context):
